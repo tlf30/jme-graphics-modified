@@ -1,5 +1,7 @@
 plugins {
     id 'java'
+    id "com.jfrog.bintray" version "1.8.5"
+    id "maven-publish"
 }
 
 group 'io.tlf.graphics'
@@ -27,4 +29,70 @@ repositories {
     mavenCentral()
     maven { url 'https://jitpack.io' }
 }
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+javadoc.failOnError = false
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives sourcesJar
+    archives javadocJar
+}
+
+def pomConfig = {
+    scm {
+        url "https://github.com/tlf30/jme-graphics-modified"
+    }
+}
+
+publishing {
+    publications {
+        mavenPublication(MavenPublication) {
+            from components.java
+            artifact sourcesJar {
+                classifier "sources"
+            }
+            artifact javadocJar {
+                classifier "javadoc"
+            }
+            groupId project.group
+            artifactId 'jme-graphics-modified'
+            version project.version
+            pom.withXml {
+                def root = asNode()
+                root.appendNode('description', 'A modified version of jayfellas jme-graphics library.')
+                root.appendNode('name', 'Jme Graphics Modified')
+                root.appendNode('url', 'https://github.com/tlf30/jme-graphics-modified')
+                root.children().last() + pomConfig
+            }
+        }
+    }
+}
+
+bintray {
+    user = System.getProperty('bintray.user')
+    key = System.getProperty('bintray.key')
+    publications = ['mavenPublication']
+
+    pkg {
+        repo = 'jme'
+        name = 'jme-graphics-modified'
+        licenses = ['MIT']
+        vcsUrl = 'https://github.com/tlf30/jme-graphics-modified'
+        version {
+            name = 'jme-graphics-modified'
+            desc = 'A modified version of jayfellas jme-graphics library.'
+            released  = new Date()
+        }
+    }
+
+}
+
 
